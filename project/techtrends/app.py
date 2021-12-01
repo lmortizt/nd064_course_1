@@ -2,12 +2,18 @@ import sqlite3
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
+from string import Template
+
+# variable to count the total querys to database
+total_querys = 0
 
 # Function to get a database connection.
 # This function connects to database with the name `database.db`
 def get_db_connection():
     connection = sqlite3.connect('database.db')
     connection.row_factory = sqlite3.Row
+    global total_querys
+    total_querys += 1
     return connection
 
 # Function to get a post using its ID
@@ -17,6 +23,14 @@ def get_post(post_id):
                         (post_id,)).fetchone()
     connection.close()
     return post
+
+# Function to get all records in the posts table
+def count_posts():
+    connection = get_db_connection()
+    total_posts = connection.execute('SELECT COUNT(*) as total_posts FROM posts').fetchone()
+    connection.close()
+    total_posts = total_posts['total_posts']
+    return total_posts
 
 # Define the Flask application
 app = Flask(__name__)
@@ -64,6 +78,29 @@ def create():
             return redirect(url_for('index'))
 
     return render_template('create.html')
+
+@app.route("/healthz")
+def healthz():
+    healthcheck = app.response_class(
+        response = json.dumps({"result":"OK - healthy"}),
+        status = 200,
+        mimetype = 'application/json'
+    )
+ 	#app.logger.info('Status request successfull')
+    return healthcheck
+
+@app.route("/metrics")
+def metrics():
+    posts = count_posts()
+    template = Template('{"db_connection_count": "${db_conns}", "post_count": "${posts}"}').substitute(db_conns = total_querys, posts = posts)
+    print(posts)
+    print(total_querys)
+    resp = app.response_class(
+        response = json.dumps(template, indent=4),
+        status = 200,
+        mimetype = 'application/json'
+    )
+    return resp
 
 # start the application on port 3111
 if __name__ == "__main__":
