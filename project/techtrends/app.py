@@ -37,7 +37,7 @@ def count_posts():
     total_posts = total_posts['total_posts']
     return total_posts
 
-def custom_logger(log_level: int, message: str):
+def custom_logger(log_level, message):
     dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     msg = dt + ', ' + message
     logging.log(log_level, msg)
