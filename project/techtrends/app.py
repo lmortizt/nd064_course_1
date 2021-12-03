@@ -1,8 +1,11 @@
+import logging
 import sqlite3
+import string
 
 from flask import Flask, jsonify, json, render_template, request, url_for, redirect, flash
 from werkzeug.exceptions import abort
 from string import Template
+from datetime import date, datetime
 
 # variable to count the total querys to database
 total_querys = 0
@@ -22,6 +25,8 @@ def get_post(post_id):
     post = connection.execute('SELECT * FROM posts WHERE id = ?',
                         (post_id,)).fetchone()
     connection.close()
+    if post != None:
+        custom_logger(logging.DEBUG, 'Article "' + post['title'] + '" retrieved!')
     return post
 
 # Function to get all records in the posts table
@@ -31,6 +36,11 @@ def count_posts():
     connection.close()
     total_posts = total_posts['total_posts']
     return total_posts
+
+def custom_logger(log_level: int, message: str):
+    dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    msg = dt + ', ' + message
+    logging.log(log_level, msg)
 
 # Define the Flask application
 app = Flask(__name__)
@@ -50,13 +60,15 @@ def index():
 def post(post_id):
     post = get_post(post_id)
     if post is None:
-      return render_template('404.html'), 404
+        custom_logger(logging.ERROR, 'Article not found.')
+        return render_template('404.html'), 404
     else:
-      return render_template('post.html', post=post)
+        return render_template('post.html', post=post)
 
 # Define the About Us page
 @app.route('/about')
 def about():
+    custom_logger(logging.INFO, 'Page "About Us" retrieved.')
     return render_template('about.html')
 
 # Define the post creation functionality 
@@ -74,7 +86,7 @@ def create():
                          (title, content))
             connection.commit()
             connection.close()
-
+            custom_logger(logging.INFO, 'The new article titled "' + title + '" was created!.')
             return redirect(url_for('index'))
 
     return render_template('create.html')
@@ -86,7 +98,6 @@ def healthz():
         status = 200,
         mimetype = 'application/json'
     )
- 	#app.logger.info('Status request successfull')
     return healthcheck
 
 @app.route("/metrics")
@@ -104,4 +115,5 @@ def metrics():
 
 # start the application on port 3111
 if __name__ == "__main__":
-   app.run(host='0.0.0.0', port='3111')
+    logging.basicConfig(level=logging.DEBUG)
+    app.run(host='0.0.0.0', port='3111')
