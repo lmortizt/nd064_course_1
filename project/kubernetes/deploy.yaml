@@ -18,7 +18,8 @@ spec:
       containers:
       - image: techtrends:latest
         name: nginx-alpine
-        port: 3111
+        ports:
+          - containerPort: 3111
         livenessProbe:
           httpGet:
             path: /healthz
