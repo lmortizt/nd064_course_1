@@ -5,9 +5,9 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: default
+    namespace: sandbox
     server: https://kubernetes.default.svc
-  project: default
+  project: sandbox
   source:
     helm:
       valueFiles:
