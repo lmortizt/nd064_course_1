@@ -2,7 +2,10 @@ name: "TechTrends - Package with Docker"
 
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -12,8 +15,16 @@ jobs:
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/techtrends
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -30,4 +41,4 @@ jobs:
           context: ./project
           file: ./project/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/techtrends:latest
+          tags: ${{ steps.meta.outputs.tags }}
