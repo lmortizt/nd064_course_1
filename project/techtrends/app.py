@@ -104,8 +104,6 @@ def healthz():
 def metrics():
     posts = count_posts()
     template = Template('{"db_connection_count": "${db_conns}", "post_count": "${posts}"}').substitute(db_conns = total_querys, posts = posts)
-    print(posts)
-    print(total_querys)
     resp = app.response_class(
         response = json.dumps(template, indent=4),
         status = 200,
